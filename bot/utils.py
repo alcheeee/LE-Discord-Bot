@@ -16,7 +16,7 @@ intents.reactions = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
-reaction_roles = {}
+reaction_roles_dict = {}
 common_ids = {
     # Channel IDs
     'rules_chat_id': 1255953709431787671,

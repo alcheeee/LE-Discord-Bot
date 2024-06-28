@@ -1,13 +1,13 @@
-from utils import bot, reaction_roles
+from utils import bot, reaction_roles_dict
 import discord
 
 
 @bot.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
-    if payload.message_id not in reaction_roles:
+    if payload.message_id not in reaction_roles_dict:
         return
 
-    message_config = reaction_roles[payload.message_id]
+    message_config = reaction_roles_dict[payload.message_id]
     if payload.emoji.name not in message_config:
         return
 
@@ -32,10 +32,10 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
 
 @bot.event
 async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
-    if payload.message_id not in reaction_roles:
+    if payload.message_id not in reaction_roles_dict:
         return
 
-    message_config = reaction_roles[payload.message_id]
+    message_config = reaction_roles_dict[payload.message_id]
     if payload.emoji.name not in message_config:
         return
 
