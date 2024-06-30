@@ -4,6 +4,7 @@ from discord.ext import commands
 from message_builder import BotMessage
 import reaction_roles
 
+bot_message = BotMessage()
 
 @bot.event
 async def on_ready():
@@ -26,7 +27,7 @@ async def admin_announcement(ctx, *, content: str):
         title, announcement = parts
         announcement_channel = discord.utils.get(ctx.guild.text_channels, name='announcements')
         if announcement_channel:
-            message = BotMessage.create_announcement(title, announcement)
+            message = bot_message.create_announcement(title, announcement)
             await announcement_channel.send(message)
         else:
             await ctx.send("The announcements channel does not exist.")
@@ -44,27 +45,40 @@ async def bot_post(ctx, channel: discord.TextChannel, *, text: str):
 
 
 async def clear_and_recreate_channels():
-    guild = bot.get_guild(1255949740646993940)
+    guild = bot.get_guild(common_ids['guild_id'])
 
-    # Clear rules channel
-    rules_channel = bot.get_channel(common_ids['rules_chat_id'])
-    if rules_channel:
-        await rules_channel.purge(limit=100)
-        rules_message = await rules_channel.send(BotMessage.rules_message())
-        await rules_message.add_reaction('✅')
-        reaction_roles_dict[rules_message.id] = {
-            '✅': common_ids['member_role_id']
-        }
+    channels_to_update = [
+        ('rules_chat_id', 'rules', 'member_role_id', True),
+        ('sign_up_chat_id', 'sign-up', 'contributor_role_id', True),
+        ('pixel_art_chat_id', 'pixel-art', None, False),
+        ('create_an_item_chat_id', 'create-an-item', None, False),
+        ('quests_chat_id', 'quests', None, False)
+    ]
 
-    # Clear sign-up channel
-    sign_up_channel = bot.get_channel(common_ids['sign_up_chat_id'])
-    if sign_up_channel:
-        await sign_up_channel.purge(limit=100)
-        signup_message = await sign_up_channel.send(BotMessage.signup_message())
-        await signup_message.add_reaction('✅')
-        reaction_roles_dict[signup_message.id] = {
-            '✅': common_ids['contributor_role_id']
-        }
+    for channel_id_key, message_key, role_id_key, add_reaction in channels_to_update:
+        await update_channel(guild, channel_id_key, message_key, role_id_key, add_reaction)
+
+async def update_channel(guild, channel_id_key, message_key, role_id_key, add_reaction):
+    channel = bot.get_channel(common_ids[channel_id_key])
+    if channel:
+        await channel.purge(limit=100)
+        message_data = bot_message.get_message(message_key)
+
+        if isinstance(message_data, list):
+            for part in message_data:
+                message = await channel.send(part)
+                if add_reaction and part == message_data[0]:
+                    await message.add_reaction('✅')
+                    reaction_roles_dict[message.id] = {
+                        '✅': common_ids[role_id_key]
+                    }
+        else:
+            message = await channel.send(message_data)
+            if add_reaction:
+                await message.add_reaction('✅')
+                reaction_roles_dict[message.id] = {
+                    '✅': common_ids[role_id_key]
+                }
 
 
 bot.run(TOKEN)
